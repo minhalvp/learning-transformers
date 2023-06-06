@@ -1,32 +1,29 @@
-import torch    
+import torch
+import tiktoken
 from model import TransformerModel
-import sentencepiece as spm
+from prepare_data import load_data
+
 
 # hyperparameters
 batch_size = 32 # how many independent sequences will we process in parallel?
 block_size = 256 # what is the maximum context length for predictions?
-epochs = 5000
+epochs = 60000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 1000
-n_embd = 128
-n_head = 8
-n_layer = 8
+n_embd = 64
+n_head = 4
+n_layer = 4
 dropout = 0.0
-vocab_size = 10000
 
-def train_tokenizer():
-    spm.SentencePieceTrainer.train(input='learning-transformers/alex.txt', model_prefix='learning-transformers/alex', vocab_size=vocab_size)
-# load tokenizer model
-tokenizer = spm.SentencePieceProcessor()
-tokenizer.Load('learning-transformers/alex.model')
+tokenizer = tiktoken.get_encoding("cl100k_base")
 
 def encode(x):
-    return tokenizer.EncodeAsIds(x)
+    return tokenizer.encode(x)
 
 def decode(x):
-    return tokenizer.DecodeIds(x)
+    return tokenizer.decode(x)
 
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
@@ -38,9 +35,9 @@ def get_batch(split):
     return x, y
 
 # convert text to training and validation data
-with open('learning-transformers/alex.txt', 'r', encoding="utf-8") as f:
-    text = f.read()
+text = load_data()
 encoded_text = encode(text)
+print("Text encoded")
 ids = torch.tensor(encoded_text, dtype=torch.long)
 n = 0.9 # percent of data to use for training
 train_ids = ids[:int(n*len(ids))]
@@ -50,11 +47,12 @@ model = TransformerModel(
     n_head=n_head,
     n_embd=n_embd,
     n_layer=n_layer,
-    vocab_size=vocab_size,
+    vocab_size=tokenizer.n_vocab,
     block_size=block_size,
     device=device,
     dropout=dropout
 ).to(device)
+# find model paramaters
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 for epoch in range(epochs):
     model.train()

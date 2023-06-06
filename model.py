@@ -23,7 +23,7 @@ class FeedForward(nn.Module):
         super().__init__()
         self.feedforward = nn.Sequential(
             nn.Linear(n_embd, 4*n_embd),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(4*n_embd, n_embd),
             nn.Dropout(dropout)
         )
