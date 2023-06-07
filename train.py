@@ -17,7 +17,7 @@ n_head = 4
 n_layer = 4
 dropout = 0.0
 
-tokenizer = tiktoken.get_encoding("cl100k_base")
+tokenizer = tiktoken.encoding_for_model("gpt2")
 
 def encode(x):
     return tokenizer.encode(x)
@@ -28,15 +28,14 @@ def decode(x):
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     data = train_ids if split == 'train' else val_ids
-    ix = torch.randint(len(ids) - block_size, (batch_size,))
-    x = torch.stack([ids[i:i+block_size] for i in ix])
-    y = torch.stack([ids[i+1:i+block_size+1] for i in ix])
-    x, y = x.to(device), y.to(device)
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    x = torch.stack([data[i:i+block_size] for i in ix])
+    y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    x, y = x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(device, non_blocking=True)
     return x, y
 
 # convert text to training and validation data
-text = load_data()
-encoded_text = encode(text)
+encoded_text = load_data()
 print("Text encoded")
 ids = torch.tensor(encoded_text, dtype=torch.long)
 n = 0.9 # percent of data to use for training
@@ -57,7 +56,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 for epoch in range(epochs):
     model.train()
     x, y = get_batch('train')
-    _, loss = model(x, y)
+    logits, loss = model(x, y)
     loss.backward()
     optimizer.step()
     optimizer.zero_grad()
