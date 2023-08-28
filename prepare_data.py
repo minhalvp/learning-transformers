@@ -1,19 +1,16 @@
-from datasets import load_dataset
 import tiktoken
-import os
-import pickle
+from datasets import load_dataset
+
+enc = tiktoken.encoding_for_model("gpt2")
 
 def load_data():
     enc = tiktoken.encoding_for_model("gpt2")
-    text = ""
-    if not os.path.exists("ml_papers.bin"):
-        dataset = load_dataset("CShorten/ML-ArXiv-Papers")
-        for i in dataset['train']:
-            text += "###"+i['title'] + ".\n" + i['abstract'].strip() + "\n"
+    tokens = []
+    def tokenize(example):
+        text = "###"+example['title'] + ".\n" + example['abstract'].strip()
         encoded_text = enc.encode(text)
-        with open("ml_papers.bin", "wb") as f:
-            pickle.dump(encoded_text, f)
-        return encoded_text
-    else:
-         with open("ml_papers.bin", "rb") as f:
-            return pickle.load(f)
+        tokens.extend(encoded_text)
+    dataset = load_dataset("CShorten/ML-ArXiv-Papers").remove_columns(["Unnamed: 0.1", "Unnamed: 0"])
+    dataset = dataset.map(tokenize).remove_columns(["title", "abstract"])
+
+    return tokens

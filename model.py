@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import sentencepiece as spm
-
 class MultiHeadAttention(nn.Module):
     def __init__(self, n_embd, n_head, dropout):
         super().__init__()
