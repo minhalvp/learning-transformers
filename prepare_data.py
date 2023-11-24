@@ -1,16 +1,17 @@
-import tiktoken
 from datasets import load_dataset
+from transformers import PreTrainedTokenizerFast
 
-enc = tiktoken.encoding_for_model("gpt2")
 
-def load_data():
-    enc = tiktoken.encoding_for_model("gpt2")
+tokenizer = PreTrainedTokenizerFast.from_pretrained("tokenizer/")
+def load_data() -> list[int]:
     tokens = []
     def tokenize(example):
-        text = "###"+example['title'] + ".\n" + example['abstract'].strip()
-        encoded_text = enc.encode(text)
+        encoded_text = tokenizer.encode(example['text'])
         tokens.extend(encoded_text)
-    dataset = load_dataset("CShorten/ML-ArXiv-Papers").remove_columns(["Unnamed: 0.1", "Unnamed: 0"])
-    dataset = dataset.map(tokenize).remove_columns(["title", "abstract"])
+    dataset = load_dataset("roneneldan/TinyStories")
+    dataset = dataset.map(tokenize)
 
     return tokens
+
+tokens = load_data()
+tokens[100:]

@@ -3,6 +3,7 @@ import tiktoken
 from model import TransformerModel
 from prepare_data import load_data
 import wandb
+
 wandb.init(project='my-project', name='my-run', mode='offline')
 # hyperparameters
 batch_size = 32 # how many independent sequences will we process in parallel?
